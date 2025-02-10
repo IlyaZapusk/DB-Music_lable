@@ -39,9 +39,12 @@ GROUP BY a.album_name;
 
 SELECT ma.artist_name
 FROM musicartistgroup ma
-LEFT JOIN albumartist aa ON ma.artistid = aa.artistid
-LEFT JOIN album a ON aa.album_id = a.albumid AND a.year = 2020
-WHERE a.albumid IS NULL;
+WHERE ma.artistid NOT IN (
+    SELECT DISTINCT aa.artistid
+    FROM albumartist aa
+    JOIN album a ON aa.album_id = a.albumid
+    WHERE a.year = 2020);
+
 
 SELECT DISTINCT c.collection_name
 FROM collection c
@@ -73,18 +76,27 @@ JOIN albumartist aa ON a.AlbumID = aa.album_id
 JOIN MusicArtistGroup ma ON aa.ArtistID = ma.ArtistID
 WHERE t.duration = (SELECT MIN(duration) FROM Track);
 
-SELECT a.album_name
-FROM album a
-JOIN track t ON a.albumid = t.albumid
-GROUP BY a.album_name
-HAVING COUNT(t.trackid) = (
-    SELECT MIN(track_count)
-    FROM (
-        SELECT COUNT(t.trackid) AS track_count
-        FROM album a
-        JOIN track t ON a.albumid = t.albumid
-        GROUP BY a.albumid
-    ) AS album_track_counts
-);
+-- SELECT a.album_name
+-- FROM album a
+-- JOIN track t ON a.albumid = t.albumid
+-- GROUP BY a.album_name
+-- HAVING COUNT(t.trackid) = (
+--    SELECT MIN(track_count)
+--    FROM (
+--        SELECT COUNT(t.trackid) AS track_count
+--        FROM album a
+--        JOIN track t ON a.albumid = t.albumid
+--        GROUP BY a.albumid
+--    ) AS album_track_counts
+-- );
 
 
+SELECT album_name , COUNT(track_name) track_count FROM album 
+JOIN track ON album.albumid = track.albumid
+GROUP BY album.albumid
+HAVING COUNT(track_name) = (  
+	SELECT COUNT(track_name) FROM album
+	JOIN track ON album.albumid = track.albumid
+	GROUP BY album.albumid
+	ORDER BY COUNT(track_name)
+	LIMIT 1);
